@@ -1,4 +1,10 @@
-T  = 100;
+clear;close all;clc
+addpath('../fdaM')
+addpath('../routines')
+rng(27);
+
+T     = 100;
+irhor = 12;
 PARAMS_SET  = 1;
 simulSetParamsFVAR;
 [Y, iv] = genSVARIV(A, B, T);
