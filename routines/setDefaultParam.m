@@ -25,7 +25,7 @@ modelSpec = setParam(modelSpec, 'nFPCMax', 20);
 % SVAR & IRs
 modelSpec = setParam(modelSpec, 'identification', 'CHOL');
 modelSpec = setParam(modelSpec, 'varsShock', modelSpec.varsSel(1));
-modelSpec = setParam(modelSpec, 'varsUnitNorm', {});
+modelSpec = setParam(modelSpec, 'varsUnitNorm', modelSpec.varsShock);
 modelSpec = setParam(modelSpec, 'Instrument', {});
 modelSpec = setParam(modelSpec, 'nZlags', 0);
 modelSpec = setParam(modelSpec, 'nNWlags', -1);

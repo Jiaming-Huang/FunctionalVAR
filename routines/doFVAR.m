@@ -1,60 +1,60 @@
 function FVAR = doFVAR(DATASET, modelSpec)
-% This function estimate a Funtional VAR with moving-block bootstrap. 
+% This function estimate a Funtional VAR with moving-block bootstrap.
 % It allows for 3 identification schemes: short-run restriction, internal
 % IV, and external IV
 %
 % --------------------------- INPUT --------------------------------
 %   DATASET   - struct with full data
-%       data       - T x N full data matrix of macro aggregates; only 
-%                       selected variables (columns) are used in VAR 
+%       data       - T x N full data matrix of macro aggregates; only
+%                       selected variables (columns) are used in VAR
 %                       estimation, specified by
 %       varsName   - 1 x N cell array of variable names of data
-%       varsDiff   - a cell array of variable names which have been 
-%                       differenced; for those variables, cumulative IRs 
+%       varsDiff   - a cell array of variable names which have been
+%                       differenced; for those variables, cumulative IRs
 %                       will be computed. Example: empty cell varsDiff =
 %                       {}, varsDiff = {CPI}
 %       dates      - T x 1 datetime
-%       fcn        - T x ngridFcn matrix of functional data, where ngridFcn 
+%       fcn        - T x ngridFcn matrix of functional data, where ngridFcn
 %                       is the number of grid points
 %
 %   modelSpec - struct with model specification
 %       ---------------  VAR ----------------
-%       varsSel:   - 1 x nSel cell array of variable names to be included 
-%                       in the VAR estimation; if identification = 'CHOL', 
+%       varsSel:   - 1 x nSel cell array of variable names to be included
+%                       in the VAR estimation; if identification = 'CHOL',
 %                       the order will be used for the Cholesky decomposition
 %       p:         - the lag order of the VAR
-%       iDET:      - an integer or vector of integers indicating the 
-%                       deterministic terms to be included in the VAR; 
-%                       1: constant, 2: linear trend, 3: quadratic trend. 
-%                       Example: modelSpec.iDET = 1; 
+%       iDET:      - an integer or vector of integers indicating the
+%                       deterministic terms to be included in the VAR;
+%                       1: constant, 2: linear trend, 3: quadratic trend.
+%                       Example: modelSpec.iDET = 1;
 %                       modelSpec.iDET = [1, 2];
 %       dateStart: - sample starting period, can be double (e.g. 1991) or
 %                       datetime object
 %       dateEnd:   - sample ending period, can be double (e.g. 2007) or
 %                       datetime object
 %       ---------------  FPCA ----------------
-%       fdParobj:  - a fdPar object in the fdaM package, used to transform 
+%       fdParobj:  - a fdPar object in the fdaM package, used to transform
 %                       discretized functional data into functional data object
-%       nFPCMax:   - the maximal number of functional principal components; 
-%                       the actual FPC used in SVAR will be selected by 
+%       nFPCMax:   - the maximal number of functional principal components;
+%                       the actual FPC used in SVAR will be selected by
 %                       variation explained and is smaller than nFPCMax
 %       ---------------  SVAR & IRs ----------------
 %       identification: - a string, either "CHOL", "InternalIV", or "ExternalIV"
-%       varsShock: - a cell array of variable names whose corresponding 
+%       varsShock: - a cell array of variable names whose corresponding
 %                       structural shocks will be used to compute IRs
-%       varsUnitNorm: - a cell array of variable names whose corresponding 
-%                       structural shocks will be normalized to 1, this is 
-%                       only used for the "InternalIV" identification scheme
-%       Instrument: - a cell array of variable names used as instruments; 
+%       varsUnitNorm: - a cell array of variable names whose contemporanous response
+%                       will be normalized to 1; this is only used for the
+%                       "InternalIV" identification scheme
+%       Instrument: - a cell array of variable names used as instruments;
 %                       this is only used for the "ExternalIV" identification scheme
 %       irhor     - number of horizons (we compute h=0 by default), so
 %                       actually it's irhor+1 horizons
 %       ---------------  Bootstrap & Inference ----------------
 %       nBoot:     - the number of bootstrap replications
 %       blkSize:   - the size of the moving block for bootstrap
-%       cLevel:    - the confidence level for the bootstrap inference; 
+%       cLevel:    - the confidence level for the bootstrap inference;
 %                       by default, it is 0.95
-%       verbose:   - a logical value indicating whether to print the 
+%       verbose:   - a logical value indicating whether to print the
 %                       progress of the bootstrap; by default, it is false
 %
 % --------------------------- OUTPUT --------------------------------
@@ -151,10 +151,10 @@ switch identification
         ismpl       = dates >= dateIVStart & dates <= dateVAR(end);
         z           = DATASET.data(ismpl, cell2mat(values(mapFull, modelSpec.Instrument)));
         % run 2SLS
-        [Bzero, Fstat]  = getBzeroIV(VAR, z, isShockVar, nZlags, nNWlags);
+        [Bzero, Fstat]  = getBzeroIV(VAR, z, isShockVar, nZlags, nNWlags, true);
         % save for later usage in bootstrap
         modelSpec.z       = z;
-    
+
     otherwise
         error('Unknown identification method.');
 end
