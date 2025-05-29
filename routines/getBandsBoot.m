@@ -23,7 +23,6 @@ resFcn      = FPCAOut.resFcn;
 ngridFcn      = size(gridFcn,2);
 Tfcn        = size(resFcn,1);
 % SVAR and IRs
-identification = modelSpec.identification;
 varsShock   = modelSpec.varsShock;
 nShocks     = length(varsShock);
 irhor       = modelSpec.irhor;
@@ -74,7 +73,7 @@ switch modelSpec.identification
                 fprintf(1,'bootstrap irf: %i of %i \n', iBoot, nBoot);
             end
         end
-
+        nValidBS = nBoot;
     case 'InternalIV'
         varsUnitNorm        = modelSpec.varsUnitNorm;
         [UBlocks, uCenter]  = prepareBlocks(u, blkSize, T, J);
@@ -86,7 +85,7 @@ switch modelSpec.identification
             % get the bootstrapped functions
             bSwitch = 1-2*(rand(Tfcn,1)>.5);
             bootFcn = mu + bootY(:,isFcnCols)*bas' + resFcn.*bSwitch;
-            
+
             %% Re-estimation on bootstrapped data
             %% 1 FPCA
             [~, bootbas, bootfpcs]     = doFPCA(gridFcn, bootFcn, fdParobj, nFPCMax);
@@ -107,12 +106,12 @@ switch modelSpec.identification
 
             %% get IRs
             [bootirs(:,:,:,iBoot), bootirs_f(:,:,:,iBoot)] = getFIRs(bootVAR, bootBzero, bootbas, bootIsShockVar, bootIsDiffVar, bootIsFcnCols, irhor);
-            
+
             if verbose && (mod(iBoot,100)==0)
                 fprintf(1,'bootstrap irf: %i of %i \n', iBoot, nBoot);
             end
         end
-
+        nValidBS = nBoot;
 
     case 'ExternalIV'
         % some params specific to external IV
@@ -121,7 +120,7 @@ switch modelSpec.identification
         validBS     = true(nBoot,1);
         %% create the blocks for the moving block bootstrap
         [UBlocks, ZBlocks, uCenter, zCenter] = prepareBlocksIV(u, modelSpec.z, blkSize, T, J);
-        
+
         for iBoot = 1:nBoot
             % construct bootstrap samples
             bootSet = genMBBSamplesIV(VAR, UBlocks, ZBlocks, uCenter, zCenter, blkSize, J);
@@ -141,10 +140,10 @@ switch modelSpec.identification
                 bootIsFcnCols   = contains(expanded_names, 'fpc');
                 bootIsShockVar  = ismember(expanded_names,varsShock);
                 bootIsDiffVar   = ismember(expanded_names,varsDiff);
-                
+
                 %% 2 SVAR
                 bootVAR         = reduceVAR(bootY, p, iDET);
-                [bootBzero,~]   = getBzeroIV(bootVAR, bootZ, bootIsShockVar, nZlags, nNWlags);
+                [bootBzero, ~]   = getBzeroIV(bootVAR, bootZ, bootIsShockVar, nZlags, nNWlags, false);
                 % bootSmplIV  = ~any(isnan(bootZ),2);
                 % bootRes     = ProxySVARidentification(bootVAR.u(bootSmplIV,:), bootIsShockVar, bootZ(bootSmplIV,:),size(bootVAR.b,1));
                 % bootBzero   = zeros(bootVAR.n,bootVAR.n);
@@ -170,7 +169,7 @@ switch modelSpec.identification
         end
         bootirs      = bootirs(:,:,:,validBS);
         bootirs_f    = bootirs_f(:,:,:,validBS);
-        res.nValidBS = sum(validBS);
+        nValidBS     = sum(validBS);
 end
 
 
@@ -182,14 +181,14 @@ lBound = lBound/100;
 
 % irs for aggregates
 bootirs_f = sort(bootirs_f,4);
-res.upper_f = bootirs_f(:,:,:,round(uBound*nBoot));
-res.lower_f = bootirs_f(:,:,:,round(lBound*nBoot));
+res.upper_f = bootirs_f(:,:,:,round(uBound*nValidBS));
+res.lower_f = bootirs_f(:,:,:,round(lBound*nValidBS));
 
 % functional irs
 bootirs =sort(bootirs,4);
-res.upper_agg =bootirs(:,:,:,round(uBound*nBoot));
-res.lower_agg =bootirs(:,:,:,round(lBound*nBoot));
-
+res.upper_agg =bootirs(:,:,:,round(uBound*nValidBS));
+res.lower_agg =bootirs(:,:,:,round(lBound*nValidBS));
+res.nValidBS = nValidBS;
 end
 
 

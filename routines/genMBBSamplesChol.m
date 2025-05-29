@@ -17,7 +17,7 @@ bootY   = VAR.data;
 bootY(p+1:end,:) = nan;
 
 
-%draw bootstrapped VAR residuals and proxies
+%draw bootstrapped VAR residuals
 index = ceil((T - blkSize + 1)*rand(J,1));
 bootUy = zeros(J*blkSize,n);
 for j = 1:J
